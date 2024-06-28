@@ -19,6 +19,8 @@ class GetGenre:
         artist, song = self.last_fm_playing()
         info = self.track_get_info(artist, song)
         print("Song info: {}".format(info))
+        top_tags = self.get_top_tags()
+        print(top_tags)
 
     @retry((HTTPError, ConnectionError), delay=1, backoff=2, tries=4)
     def last_fm_playing(self):
@@ -65,5 +67,21 @@ class GetGenre:
             return None
         except (KeyError, HTTPError, ConnectionError) as e:
             print(f"Error fetching track info from Last.fm: {e}")
+            return None
+
+    @retry((HTTPError, ConnectionError), delay=1, backoff=2, tries=4)
+    def get_top_tags(self):
+        params = {
+            'method': 'tag.getTopTags',
+            'api_key': self.lastfm_key,
+            'format': 'json'
+        }
+        try:
+            response = requests.get(self.lastfm_url_base, params=params)
+            data = response.json()
+            if 'toptags' in data and 'tag' in data['toptags']:
+                return [tag['name'] for tag in data['toptags']['tag']]
+            return []
+        except:
             return None
 
