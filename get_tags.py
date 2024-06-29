@@ -5,6 +5,6 @@ class GetTags:
         pass
 
     def get_tags(self):
-        tags = GetGenre().get_top_tags
+        tags = GetGenre().get_top_tags()
         return tags
 
