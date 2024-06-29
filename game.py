@@ -1,7 +1,7 @@
 import pygame
 import random
 from lastfmapi import GetGenre
-import time
+from basic_functions import SlimeSelect
 import win32gui
 import win32api
 import win32con
@@ -16,28 +16,7 @@ info = pygame.display.Info()
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 screen.fill(BG_COLOR)
 
-all_slime_idle_images = []
-print(all_slime_idle_images)
 
-for i in range(len(slimes)):
-    slime = slime_path + slimes[i]
-    slime_idle_path = slime + '/Idle'
-    slime_idle_image = []
-    while len(slime_idle_image) != 8:
-        for i in range(1, 9):
-            slime_idle_image_temp = pygame.image.load(slime_idle_path + '/' + f"Idle{i}.png").convert_alpha()
-            slime_idle_image_temp = pygame.transform.scale(slime_idle_image_temp, (150, 150))
-            slime_idle_image.append(slime_idle_image_temp)
-    all_slime_idle_images.append(slime_idle_image)
-
-blue_slime_idle_images = all_slime_idle_images[0]
-green_slime_idle_images = all_slime_idle_images[1]
-red_slime_idle_images = all_slime_idle_images[2]
-
-frame_index = 0
-frame_count = len(slime_idle_image)
-clock = pygame.time.Clock()
-animation_speed = 12
 
 x_pos = random.randint(0, WIDTH - 150)
 y_pos = random.randint(0, HEIGHT - 150)
@@ -45,23 +24,33 @@ x_speed = random.choice([-1, 1]) * random.uniform(1, 3)
 y_speed = random.choice([-1, 1]) * random.uniform(1, 3)
 
 
-def green(x_pos, y_pos):
+def green(x_pos, y_pos, x_speed, y_speed):
     x_pos = x_pos + x_speed
     y_pos = y_pos + y_speed
-
-
-run = True
-while run:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-
-    green(x_pos, y_pos)
-
     if x_pos <= 0 or x_pos >= WIDTH - 150:
         x_speed = -x_speed
     if y_pos <= 0 or y_pos >= HEIGHT - 150:
         y_speed = -y_speed
+    return x_pos, y_pos, x_speed, y_speed
+
+run = True
+while run:
+    song_info = GetGenre()
+    artist, song = song_info.last_fm_playing()
+    genre = song_info.track_get_info(artist, song)
+    slime = SlimeSelect(genre).select_slime()
+
+    frame_index = 0
+    frame_count = SlimeSelect(genre).frame_count()
+    clock = pygame.time.Clock()
+    animation_speed = 12
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+    if SlimeSelect(genre).current_slime == 'Blue_Slime':
+        x_pos, y_pos, x_speed, y_speed = green(x_pos, y_pos, x_speed, y_speed)
 
     screen.fill(BG_COLOR)
 
@@ -73,7 +62,7 @@ while run:
 
     frame_index = (frame_index + 1) % frame_count
 
-    screen.blit(slime_idle_image[frame_index], (x_pos, y_pos))
+    screen.blit(slime[frame_index], (x_pos, y_pos))
     pygame.display.flip()
 
     clock.tick(animation_speed)

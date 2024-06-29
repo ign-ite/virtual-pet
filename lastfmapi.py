@@ -41,10 +41,10 @@ class GetGenre:
                     artist = track['artist']['#text']
                     song = track['name']
                     return artist, song
-            return 'None'
+            return 'None', 'None'
         except (KeyError, HTTPError, ConnectionError) as e:
             print(f"Error fetching Last.fm data: {e}")
-            return 'None'
+            return 'None', 'None'
 
     @retry((HTTPError, ConnectionError), delay=1, backoff=2, tries=4)
     def track_get_info(self, artist, track_name):
@@ -59,12 +59,15 @@ class GetGenre:
             req = requests.get(self.lastfm_url_base, params=params)
             req.raise_for_status()
             track_info = req.json().get('track')
-            if track_info:
-                top_tags = track_info['toptags']
-                tag = top_tags['tag']
-                genre = tag[0]['name']
-                return genre
-            return 'None'
+            if artist == 'None' and track_name == 'None':
+                return 'None'
+            else:
+                if track_info:
+                    top_tags = track_info['toptags']
+                    tag = top_tags['tag']
+                    genre = tag[0]['name']
+                    return genre
+                return 'None'
         except (KeyError, HTTPError, ConnectionError) as e:
             print(f"Error fetching track info from Last.fm: {e}")
             return 'None'
@@ -85,7 +88,3 @@ class GetGenre:
         except:
             return 'None'
 
-genre = GetGenre()
-lastfm, song = genre.last_fm_playing()
-print(lastfm)
-print(song)
